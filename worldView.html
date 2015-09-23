@@ -1,0 +1,127 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>Barbara Hamde's Test</title>
+    <meta charset="UTF-8">
+    <meta name="description" content="Barbara Hamde Test">
+
+    <style type="text/css">
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #header {
+        background-color: rgba(0, 255, 179, 0.1);
+      }
+      #lhsHeader {
+        margin: 10px;
+        font-style: italic;
+        font-size: large;
+      }
+      #rhsHeader {
+        margin-right: 10px;
+        font-size: large;
+        position: relative;
+        float: right;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header">
+      <span id="lhsHeader">Barbara Hamde</span>
+      <span id="rhsHeader">email:barbara.hamde@gmail.com &nbsp; mobile:0212096075</span>
+    </div>
+    <div id="map"></div>
+
+    <script type="text/javascript">
+
+      var map;
+
+      // creating the google map
+      function initMap() {
+        // lat/long coordinates of Romania to center the world map around it
+        var romaniaCoordinates = {lat: 44.4167, lng: 26.1000};
+        // to track XMLHttpRequest object
+        var xmlHttp = null;
+        var timezoneAPIKey = "AIzaSyDfvIJ4IPUEgzJ3Al585htrND0Gg03OsHA";
+
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: romaniaCoordinates,
+          zoom: 2
+        });
+
+        // initiating the popup textbox which will be shown on 'right click'
+        var textDisplay = new google.maps.InfoWindow;
+
+        // listening to right click even to create the required text and show it in the text box
+        google.maps.event.addListener(map, "rightclick", function(event) {
+          // URL for google maps timezone API - syntax to return json format
+          var url = "https://maps.googleapis.com/maps/api/timezone/json?";
+
+          // retrieve the lat & lng
+          var lat = event.latLng.lat();
+          var lng = event.latLng.lng();
+          var textDisplayHtmlContent;
+          var currentTime = new Date();
+          var timestampSeconds = Math.floor((currentTime.getTime()) / 1000);
+
+          //if an error returned from the event and no data retrieved, return
+          if (!lat || !lng) {
+            return;
+          }
+          //constructing the URL
+          url += "location=" + lat + ',' + lng;
+          url += "&timestamp=" + timestampSeconds;
+          url += "&key=" + timezoneAPIKey;
+
+          // calling google maps timezone API
+          xmlHttp = new XMLHttpRequest(); 
+          xmlHttp.onreadystatechange = processTimezoneRequest;
+          xmlHttp.open( "GET", url, true );
+          xmlHttp.send( null );
+
+          //callback function (as a closure) on timezone response
+          function processTimezoneRequest () {
+            if ( xmlHttp.readyState === 4 && xmlHttp.status === 200 ) 
+            {
+              // populating the textbox with retrieved data on success
+              textDisplayHtmlContent = "Latitude = " + lat + " <br>Longitude = " + lng;
+              if ( xmlHttp.responseText) {
+                var responseData = JSON.parse(xmlHttp.responseText);
+
+                // ensure that status is OK before getting the information from it
+                if(responseData.status === "OK") {
+                  var givenLocationTime = new Date(currentTime.getTime() + (responseData.dstOffset + responseData.rawOffset)*1000);
+
+                  textDisplayHtmlContent += "<br>Timezone = " + responseData.timeZoneId;
+                  textDisplayHtmlContent += "<br>UTC Time = " + currentTime.getUTCHours() + ":" + currentTime.getUTCMinutes() + ":" + currentTime.getUTCSeconds();
+                  textDisplayHtmlContent += "<br>Local Time = " + givenLocationTime.getUTCHours() + ":" + givenLocationTime.getUTCMinutes() + ":" + givenLocationTime.getUTCSeconds();
+                }
+              }
+
+              // Display the data in the textbox
+              textDisplay.setContent(textDisplayHtmlContent);
+              textDisplay.setPosition(event.latLng);
+              textDisplay.open(map);
+            }
+
+            return;
+          }
+
+        });
+      }
+
+    </script>
+
+<!-- google map API key :: AIzaSyCDhmCSXg3SNu-GjYPb9vNq5YUBbRPWRjE -->
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDhmCSXg3SNu-GjYPb9vNq5YUBbRPWRjE&callback=initMap">
+    </script>
+  </body>
+</html>
